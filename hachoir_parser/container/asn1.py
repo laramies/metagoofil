@@ -15,6 +15,8 @@ Technical informations:
 * ITU-U recommendations:
   http://www.itu.int/rec/T-REC-X/en
   (X.680, X.681, X.682, X.683, X.690, X.691, X.692, X.693, X.694)
+* dumpasn1
+  http://www.cs.auckland.ac.nz/~pgut001/dumpasn1.c
 
 General information:
 * Wikipedia (english) article
@@ -108,7 +110,12 @@ def readUTF8String(self, content_size):
 def readBMPString(self, content_size):
     yield String(self, "value", content_size, charset="UTF-16")
 
-def readBinary(self, content_size):
+def readBitString(self, content_size):
+    yield UInt8(self, "padding_size", description="Number of unused bits")
+    if content_size > 1:
+        yield Bytes(self, "value", content_size-1)
+
+def readOctetString(self, content_size):
     yield Bytes(self, "value", content_size)
 
 def formatObjectID(fieldset):
@@ -121,6 +128,11 @@ def readObjectID(self, content_size):
     yield textHandler(UInt8(self, "first"), formatFirstObjectID)
     while self.current_size < self.size:
         yield OID_Integer(self, "item[]")
+
+def readBoolean(self, content_size):
+    if content_size != 1:
+        raise ParserError("Overlong boolean: got %s bytes, expected 1 byte"%content_size)
+    yield textHandler(UInt8(self, "value"), lambda field:str(bool(field.value)))
 
 def readInteger(self, content_size):
     # Always signed?
@@ -160,16 +172,16 @@ def formatUTCTime(fieldset):
 class Object(FieldSet):
     TYPE_INFO = {
         0: ("end[]", None, "End (reserved for BER, None)", None), # TODO: Write parser
-        1: ("boolean[]", None, "Boolean", None), # TODO: Write parser
+        1: ("boolean[]", readBoolean, "Boolean", None),
         2: ("integer[]", readInteger, "Integer", None),
-        3: ("bit_str[]", readBinary, "Bit string", None),
-        4: ("octet_str[]", readBinary, "Octet string", None),
+        3: ("bit_str[]", readBitString, "Bit string", None),
+        4: ("octet_str[]", readOctetString, "Octet string", None),
         5: ("null[]", None, "NULL (empty, None)", None),
-        6: ("obj_id[]", readObjectID, "Object identifier", formatObjectID), # TODO: Write parser
+        6: ("obj_id[]", readObjectID, "Object identifier", formatObjectID),
         7: ("obj_desc[]", None, "Object descriptor", None), # TODO: Write parser
         8: ("external[]", None, "External, instance of", None), # TODO: Write parser # External?
-        9: ("real[]", readASCIIString, "Real number", None),
-        10: ("enum[]", None, "Enumerated", None), # TODO: Write parser
+        9: ("real[]", readASCIIString, "Real number", None), # TODO: Write parser
+        10: ("enum[]", readInteger, "Enumerated", None),
         11: ("embedded[]", None, "Embedded PDV", None), # TODO: Write parser
         12: ("utf8_str[]", readUTF8String, "Printable string", None),
         13: ("rel_obj_id[]", None, "Relative object identifier", None), # TODO: Write parser
@@ -206,22 +218,37 @@ class Object(FieldSet):
     def __init__(self, *args, **kw):
         FieldSet.__init__(self, *args, **kw)
         key = self["type"].value & 31
-        if key in self.TYPE_INFO:
-            self._name, self._handler, self._description, create_desc = self.TYPE_INFO[key]
-            if create_desc:
-                self.createDescription = lambda: "%s: %s" % (self.TYPE_INFO[key][2], create_desc(self))
-                self._description = None
-        elif key == 31:
-            raise ParserError("ASN.1 Object: tag bigger than 30 are not supported")
+        if self['class'].value == 0:
+            # universal object
+            if key in self.TYPE_INFO:
+                self._name, self._handler, self._description, create_desc = self.TYPE_INFO[key]
+                if create_desc:
+                    self.createDescription = lambda: "%s: %s" % (self.TYPE_INFO[key][2], create_desc(self))
+                    self._description = None
+            elif key == 31:
+                raise ParserError("ASN.1 Object: tag bigger than 30 are not supported")
+            else:
+                self._handler = None
+        elif self['form'].value:
+            # constructed: treat as sequence
+            self._name = 'seq[]'
+            self._handler = readSequence
+            self._description = 'constructed object type %i' % key
         else:
-            self._handler = None
+            # primitive, context/private
+            self._name = 'raw[]'
+            self._handler = readASCIIString
+            self._description = '%s object type %i' % (self['class'].display, key)
         field = self["size"]
         self._size = field.address + field.size + field.value*8
 
     def createFields(self):
         yield Enum(Bits(self, "class", 2), self.CLASS_DESC)
         yield Enum(Bit(self, "form"), self.FORM_DESC)
-        yield Enum(Bits(self, "type", 5), self.TYPE_DESC)
+        if self['class'].value == 0:
+            yield Enum(Bits(self, "type", 5), self.TYPE_DESC)
+        else:
+            yield Bits(self, "type", 5)
         yield ASNInteger(self, "size", "Size in bytes")
         size = self["size"].value
         if size:

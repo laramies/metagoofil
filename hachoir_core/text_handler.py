@@ -7,7 +7,6 @@ from hachoir_core.tools import (
     durationWin64 as doDurationWin64,
     deprecated)
 from types import FunctionType, MethodType
-from hachoir_core.i18n import _
 from hachoir_core.field import Field
 
 def textHandler(field, handler):

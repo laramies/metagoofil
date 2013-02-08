@@ -14,10 +14,9 @@ from hachoir_parser import Parser
 from hachoir_core.field import (FieldSet,
     Bit, NullBits, NullBytes,
     UInt8, UInt32, String, RawBytes, Enum,
-    PascalString32, TimestampUnix64, CompressedField,
+    TimestampUnix64, CompressedField,
     SubFile)
 from hachoir_core.endian import BIG_ENDIAN
-from sys import hexversion
 
 try:
     import hashlib

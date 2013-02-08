@@ -12,9 +12,9 @@ unicode_stdout = True     # Replace stdout and stderr with Unicode compatible ob
                           # Disable it for readline or ipython
 
 # Global options
-debug = False             # Display many informations usefull to debug
-verbose = False           # Display more informations
-quiet = True             # Don't display warnings
+debug = False            # Display many informations usefull to debug
+verbose = False          # Display more informations
+quiet = True             # Don't display warni
 
 # Use internationalization and localization (gettext)?
 if os.name == "nt":

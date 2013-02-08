@@ -3,6 +3,7 @@ import types
 from hachoir_core.error import error
 from hachoir_core.i18n import _
 from hachoir_parser import Parser, HachoirParser
+import sys
 
 ### Parser list ################################################################
 
@@ -84,12 +85,14 @@ class ParserList(object):
     def __iter__(self):
         return iter(self.parser_list)
 
-    def print_(self, out, title=None, verbose=False, format="one-line"):
+    def print_(self, title=None, out=None, verbose=False, format="one-line"):
         """Display a list of parser with its title
          * out: output file
          * title : title of the list to display
          * format: "rest", "trac", "file-ext", "mime" or "one_line" (default)
         """
+        if out is None:
+            out = sys.stdout
 
         if format in ("file-ext", "mime"):
             # Create file extension set
@@ -174,9 +177,10 @@ class ParserList(object):
 class HachoirParserList(ParserList):
     _instance = None
 
-    def __new__(cls):
+    @classmethod
+    def getInstance(cls):
         if cls._instance is None:
-            cls._instance = object.__new__(cls)
+            cls._instance = cls()
         return cls._instance
 
     def __init__(self):

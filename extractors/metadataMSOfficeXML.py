@@ -4,6 +4,7 @@ import sys
 import re
 import os
 import random
+import myparser
 
 class metaInfoMS:
 	def __init__(self):
@@ -34,9 +35,9 @@ class metaInfoMS:
 		self.userscomments =""
 		self.thumbnailPath =""
 		self.comments= "ok"
+		self.text=""
 		
 	def __init__(self,filepath):
-		print filepath
 		self.template =""
 		self.totalTime =""
 		self.pages =""
@@ -62,17 +63,16 @@ class metaInfoMS:
 		self.createdDate =""
 		self.modifiedDate =""			
 		self.thumbnailPath =""	
-		
 		rnd  = str(random.randrange(0, 1001, 3))
 		zip = zipfile.ZipFile(filepath, 'r')
 		file('app'+rnd+'.xml', 'w').write(zip.read('docProps/app.xml'))
 		file('core'+rnd+'.xml', 'w').write(zip.read('docProps/core.xml'))
+		file('docu'+rnd+'.xml', 'w').write(zip.read('word/document.xml'))
 		try:
 			file('comments'+rnd+'.xml', 'w').write(zip.read('word/comments.xml'))
 			self.comments="ok"
 		except:
 			self.comments="error"
-		
 		thumbnailPath = ""
 		#try:
 			#file('thumbnail'+rnd+'.jpeg', 'w').write(zip.read('docProps/thumbnail.jpeg'))
@@ -81,20 +81,22 @@ class metaInfoMS:
 		#	pass
 			
 		zip.close()
-
 		# primero algunas estadisticas del soft usado para la edicion y del documento
-		
 		f = open ('app'+rnd+'.xml','r')
 		app = f.read()
 		self.cargaApp(app)
 		f.close()
-		
 		if self.comments=="ok":
 			f = open ('comments'+rnd+'.xml','r')
 			comm = f.read()
 			self.cargaComm(comm)
 			f.close()
-
+		
+		# document content
+		f = open ('docu'+rnd+'.xml','r')
+		docu = f.read()
+		self.text = docu
+		f.close()
 		# datos respecto a autor, etc
 
 		f = open ('core'+rnd+'.xml','r')
@@ -108,6 +110,7 @@ class metaInfoMS:
 		os.remove('app'+rnd+'.xml')
 		os.remove('core'+rnd+'.xml')	
 		os.remove('comments'+rnd+'.xml')	
+		os.remove('docu'+rnd+'.xml')
 		#self.toString()
 		
 	def toString(self):
@@ -298,6 +301,9 @@ class metaInfoMS:
 	def getData(self):
 		return "ok"
 	
+	def getTexts(self):
+		return "ok"
+
 	def getRaw(self):
 		raw = "Not implemented yet"
 		return raw
@@ -317,6 +323,10 @@ class metaInfoMS:
 			else:
 				pass
 		return temporal
+
+	def getEmails(self):
+		res=myparser.parser(self.text)
+		return res.emails()
 
 	def getPaths(self):
 		res=[]

@@ -12,8 +12,8 @@ class GenericFieldSet(BasicFieldSet):
     document).
 
     Class attributes:
-    - endian: Bytes order (L{BIG_ENDIAN} or L{LITTLE_ENDIAN}). Optional if the
-      field set has a parent ;
+    - endian: Bytes order (L{BIG_ENDIAN}, L{LITTLE_ENDIAN} or L{MIDDLE_ENDIAN}).
+      Optional if the field set has a parent ;
     - static_size: (optional) Size of FieldSet in bits. This attribute should
       be used in parser of constant size.
 
@@ -343,19 +343,16 @@ class GenericFieldSet(BasicFieldSet):
         """
         if self._field_generator is None:
             return 0
-        added = 0
+        oldlen = len(self._fields)
         try:
             for index in xrange(number):
                 self._addField( self._field_generator.next() )
-                added += 1
         except HACHOIR_ERRORS, err:
             if self._fixFeedError(err) is False:
                 raise
-            added += 1
         except StopIteration:
-            if self._stopFeeding():
-                added += 1
-        return added
+            self._stopFeeding()
+        return len(self._fields) - oldlen
 
     def _feedAll(self):
         if self._field_generator is None:
@@ -387,14 +384,20 @@ class GenericFieldSet(BasicFieldSet):
                     done += 1
         except HACHOIR_ERRORS, err:
             field = self._fixFeedError(err)
-            if field:
+            if isinstance(field, Field):
                 yield field
+            elif hasattr(field, '__iter__'):
+                for f in field:
+                    yield f
             elif field is False:
                 raise
         except StopIteration:
             field = self._stopFeeding()
-            if field:
+            if isinstance(field, Field):
                 yield field
+            elif hasattr(field, '__iter__'):
+                for f in field:
+                    yield f
 
     def _isDone(self):
         return (self._field_generator is None)

@@ -1,5 +1,5 @@
 PACKAGE = "hachoir-metadata"
-VERSION = "1.2.1"
-WEBSITE = "http://hachoir.org/wiki/hachoir-metadata"
+VERSION = "1.3.3"
+WEBSITE = "http://bitbucket.org/haypo/hachoir/wiki/hachoir-metadata"
 LICENSE = "GNU GPL v2"
 

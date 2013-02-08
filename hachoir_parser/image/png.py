@@ -22,7 +22,7 @@ from hachoir_core.endian import NETWORK_ENDIAN
 from hachoir_core.tools import humanFilesize
 from datetime import datetime
 
-MAX_FILESIZE = 500 * 1024 * 1024
+MAX_FILESIZE = 500 * 1024 * 1024 # 500 MB
 
 try:
     from zlib import decompressobj
@@ -44,7 +44,7 @@ UNIT_NAME = {1: "Meter"}
 COMPRESSION_NAME = {
     0: u"deflate" # with 32K sliding window
 }
-MAX_CHUNK_SIZE = 500 * 1024 # Maximum chunk size (500 KB)
+MAX_CHUNK_SIZE = 5 * 1024 * 1024 # Maximum chunk size (5 MB)
 
 def headerParse(parent):
     yield UInt32(parent, "width", "Width (pixels)")
@@ -74,9 +74,9 @@ def paletteDescription(parent):
     return "Palette: %u colors" % (parent["size"].value // 3)
 
 def gammaParse(parent):
-    yield UInt32(parent, "gamma", "Gamma (x10,000)")
+    yield UInt32(parent, "gamma", "Gamma (x100,000)")
 def gammaValue(parent):
-    return float(parent["gamma"].value) / 10000
+    return float(parent["gamma"].value) / 100000
 def gammaDescription(parent):
     return "Gamma: %.3f" % parent.value
 
@@ -152,10 +152,8 @@ class ImageData(Fragment):
         self.setLinks(first, next)
 
 def parseTransparency(parent):
-    yield UInt8(parent, "color_index")
-
-def textTransparency(parent):
-    return "Transparency: color #%u" % parent["color_index"].value
+    for i in range(parent["size"].value):
+        yield UInt8(parent, "alpha_value[]", "Alpha value for palette entry %i"%i)
 
 def getBitsPerPixel(header):
     nr_component = 1
@@ -173,7 +171,7 @@ class Chunk(FieldSet):
         "PLTE": ("palette", paletteParse, paletteDescription, None),
         "gAMA": ("gamma", gammaParse, gammaDescription, gammaValue),
         "tEXt": ("text[]", textParse, textDescription, None),
-        "tRNS": ("transparency", parseTransparency, textTransparency, None),
+        "tRNS": ("transparency", parseTransparency, "Transparency Info", None),
 
         "bKGD": ("background", parseBackgroundColor, backgroundColorDesc, None),
         "IDAT": ("data[]", lambda parent: (ImageData(parent),), "Image data", None),

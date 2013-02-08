@@ -7,9 +7,8 @@ from hachoir_core.error import error, HACHOIR_ERRORS
 from hachoir_core.i18n import _
 from hachoir_core.log import Logger
 from hachoir_metadata.metadata_item import (
-    Data, MIN_PRIORITY, MAX_PRIORITY, QUALITY_NORMAL)
+    MIN_PRIORITY, MAX_PRIORITY, QUALITY_NORMAL)
 from hachoir_metadata.register import registerAllItems
-import re
 
 extractors = {}
 

@@ -8,6 +8,7 @@ from hachoir_core.error import warning, info, HACHOIR_ERRORS
 from hachoir_parser import ValidateError, HachoirParserList
 from hachoir_core.stream import FileInputStream
 from hachoir_core.i18n import _
+import weakref
 
 
 class QueryParser(object):
@@ -18,7 +19,7 @@ class QueryParser(object):
         self.validate = True
         self.use_fallback = False
         self.parser_args = None
-        self.db = HachoirParserList()
+        self.db = HachoirParserList.getInstance()
         self.parsers = set(self.db)
         parsers = []
         for tag in tags:
@@ -80,6 +81,20 @@ class QueryParser(object):
         return parsers
 
     def parse(self, stream, fallback=True):
+        if hasattr(stream, "_cached_parser"):
+            parser = stream._cached_parser()
+        else:
+            parser = None
+        if parser is not None:
+            if parser.__class__ in self.parsers:
+                return parser
+            if self.use_fallback and parser.__class__ == fb:
+                return parser
+        parser = self.doparse(stream, fallback)
+        stream._cached_parser = weakref.ref(parser)
+        return parser
+
+    def doparse(self, stream, fallback=True):
         fb = None
         warn = warning
         for parser in self.parsers:
@@ -109,7 +124,7 @@ def guessParser(stream):
     return QueryParser(stream.tags).parse(stream)
 
 
-def createParser(filename, real_filename=None):
+def createParser(filename, real_filename=None, tags=None):
     """
     Create a parser from a file or returns None on error.
 
@@ -117,4 +132,7 @@ def createParser(filename, real_filename=None):
     - filename (unicode): Input file name ;
     - real_filename (str|unicode): Real file name.
     """
-    return guessParser(FileInputStream(filename, real_filename))
+    if not tags:
+        tags = []
+    stream = FileInputStream(filename, real_filename, tags=tags)
+    return guessParser(stream)

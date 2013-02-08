@@ -16,7 +16,6 @@ from hachoir_parser import Parser
 from hachoir_core.field import (FieldSet,
     Enum, Bits, UInt8, UInt16, UInt32,
     RawBytes)
-from hachoir_core.field.integer import Bits
 from hachoir_core.endian import LITTLE_ENDIAN
 from hachoir_core.tools import humanFilesize
 from hachoir_core.text_handler import textHandler, hexadecimal

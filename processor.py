@@ -1,21 +1,22 @@
 #Christian Martorella 2011
 '''
-This class will sort the results and create unique list of soft, users and paths
+This class will sort the results and create unique list of software, users and paths
 '''
 
 class processor():
 		def __init__(self,list):
-			self.list=list
-			self.unique_users=[]
-			self.unique_soft=[]
-			self.unique_paths=[]
+			self.list = list
+			self.unique_users = []
+			self.unique_soft = []
+			self.stat_soft = []
+			self.unique_paths = []
 
 		def print_all(self):
 			for x in self.list:
  				print x[0]
- 				if x[1]!=[]:
+ 				if x[1] != []:
 					print x[1]
- 				if x[2]!=[]:
+ 				if x[2] != []:
 					print x[2]
   
 		def sort_users(self):
@@ -25,7 +26,12 @@ class processor():
  						if self.unique_users.count(y) != 0:
 							pass
 						else:
-							self.unique_users.append(y)
+							try:
+								self.unique_users.append(y.lstrip())
+							except:
+								pass
+				else:
+					pass 
 			return self.unique_users
 
  		def sort_software(self):
@@ -35,8 +41,14 @@ class processor():
 						if self.unique_soft.count(y) != 0:
 							pass
 						else:
-							self.unique_soft.append(y)
+							try:
+								self.unique_soft.append(y.lstrip())
+							except Exception, e:
+								pass
+				else:
+					pass
 			return self.unique_soft
+
 		def sort_paths(self):
 			for x in self.list:
 				if x[2]!=[]:

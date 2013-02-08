@@ -518,7 +518,6 @@ class WMF_File(Parser):
                 return "Invalid record type"
             if emf["reserved"].value != "\0\0":
                 return "Invalid reserved"
-            FUNC_DICT = EMF_META_NAME
         else:
             # Check AMF header
             if self.isAPM():
@@ -535,7 +534,6 @@ class WMF_File(Parser):
                 return "Invalid header size"
             if self["nb_params"].value != 0:
                 return "Invalid number of parameters"
-            FUNC_DICT = META_NAME
 
         # Check first functions
         for index in xrange(5):

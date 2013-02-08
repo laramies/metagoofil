@@ -85,6 +85,7 @@ class TTF_Metadata(RootMetadata):
 class OLE2_Metadata(RootMetadata):
     SUMMARY_ID_TO_ATTR = {
          2: "title",     # Title
+         3: "title",     # Subject
          4: "author",
          6: "comment",
          8: "author",    # Last saved by
@@ -108,46 +109,45 @@ class OLE2_Metadata(RootMetadata):
     def extract(self, ole2):
         self._extract(ole2)
 
-    def _extract(self, fieldset, main_document=True):
-        if main_document:
-            # _feedAll() is needed to make sure that we get all root[*] fragments
+    def _extract(self, fieldset):
+        try:
             fieldset._feedAll()
-            if "root[0]" in fieldset:
-                self.useRoot(fieldset["root[0]"])
-        doc_summary = self.getField(fieldset, main_document, "doc_summary[0]")
+        except StopIteration:
+            pass
+        if "root[0]" in fieldset:
+            self._extract(self.getFragment(fieldset["root[0]"]))
+        doc_summary = self.getField(fieldset, "doc_summary[0]")
         if doc_summary:
             self.useSummary(doc_summary, True)
-        word_doc = self.getField(fieldset, main_document, "word_doc[0]")
+        word_doc = self.getField(fieldset, "word_doc[0]")
         if word_doc:
             self.useWordDocument(word_doc)
-        summary = self.getField(fieldset, main_document, "summary[0]")
+        summary = self.getField(fieldset, "summary[0]")
         if summary:
             self.useSummary(summary, False)
-        revision = self.getField(fieldset, main_document, "table1[0]")
+        table = self.getField(fieldset, "table1[0]")
+        if table:
+            self.useTable(table)
 
-    @fault_tolerant
-    def useRoot(self, root):
-        stream = root.getSubIStream()
+    def getFragment(self, frag):
+        stream = frag.getSubIStream()
         ministream = guessParser(stream)
         if not ministream:
             warning("Unable to create the OLE2 mini stream parser!")
-            return
-        self._extract(ministream, main_document=False)
+            return frag
+        return ministream
 
-    def getField(self, fieldset, main_document, name):
-        if name not in fieldset:
-            return None
+    def getField(self, fieldset, name):
         # _feedAll() is needed to make sure that we get all fragments
         # eg. summary[0], summary[1], ..., summary[n]
-        fieldset._feedAll()
+        try:
+            fieldset._feedAll()
+        except StopIteration:
+            pass
+        if name not in fieldset:
+            return None
         field = fieldset[name]
-        if main_document:
-            stream = field.getSubIStream()
-            field = guessParser(stream)
-            if not field:
-                warning("Unable to create the OLE2 parser for %s!" % name)
-                return None
-        return field
+        return self.getFragment(field)
 
     @fault_tolerant
     def useSummary(self, summary, is_doc_summary):
@@ -161,7 +161,15 @@ class OLE2_Metadata(RootMetadata):
 
     @fault_tolerant
     def useWordDocument(self, doc):
-        self.comment = "Encrypted: %s" % doc["fEncrypted"].value
+        self.comment = "Encrypted: %s" % doc["FIB/fEncrypted"].value
+
+    @fault_tolerant
+
+    def useTable(self,table):
+        if 'SttbSavedBy' in table:
+            arr = list(table['SttbSavedBy'].array('string'))
+            for i in xrange(0, len(arr),2):
+                self.revision_history = "Revision #%d: Author '%s', file '%s'"%(i//2, arr[i].value    , arr[i+1].value)
 
     @fault_tolerant
     def useProperty(self, summary, property, is_doc_summary):

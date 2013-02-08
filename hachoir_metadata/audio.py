@@ -4,7 +4,7 @@ from hachoir_parser.audio import AuFile, MpegAudioFile, RealAudioFile, AiffFile,
 from hachoir_parser.container import OggFile, RealMediaFile
 from hachoir_core.i18n import _
 from hachoir_core.tools import makePrintable, timedelta2seconds, humanBitRate
-from datetime import timedelta, date
+from datetime import timedelta
 from hachoir_metadata.metadata_item import QUALITY_FAST, QUALITY_NORMAL, QUALITY_BEST
 from hachoir_metadata.safe import fault_tolerant, getValue
 

@@ -1,5 +1,4 @@
 from hachoir_core.field import MissingField
-from hachoir_core.error import HachoirError
 from hachoir_metadata.metadata import (registerExtractor,
     Metadata, RootMetadata, MultipleMetadata)
 from hachoir_metadata.metadata_item import QUALITY_GOOD
@@ -10,7 +9,6 @@ from hachoir_parser.container import MkvFile
 from hachoir_parser.container.mkv import dateToDatetime
 from hachoir_core.i18n import _
 from hachoir_core.tools import makeUnicode, makePrintable, timedelta2seconds
-from hachoir_core.error import warning
 from datetime import timedelta
 
 class MkvMetadata(MultipleMetadata):
@@ -67,8 +65,8 @@ class MkvMetadata(MultipleMetadata):
 
     def processVideo(self, track):
         video = Metadata(self)
+        self.trackCommon(track, video)
         try:
-            self.trackCommon(track, video)
             video.compression = track["CodecID/string"].value
             if "Video" in track:
                 video.width = track["Video/PixelWidth/unsigned"].value
@@ -77,22 +75,34 @@ class MkvMetadata(MultipleMetadata):
             pass
         self.addGroup("video[]", video, "Video stream")
 
+    def getDouble(self, field, parent):
+        float_key = '%s/float' % parent
+        if float_key in field:
+            return field[float_key].value
+        double_key = '%s/double' % parent
+        if double_key in field:
+            return field[double_key].value
+        return None
+
     def processAudio(self, track):
         audio = Metadata(self)
-        try:
-            self.trackCommon(track, audio)
-            if "Audio" in track:
-                audio.sample_rate = track["Audio/SamplingFrequency/float"].value
+        self.trackCommon(track, audio)
+        if "Audio" in track:
+            frequency = self.getDouble(track, "Audio/SamplingFrequency")
+            if frequency is not None:
+                audio.sample_rate = frequency
+            if "Audio/Channels/unsigned" in track:
                 audio.nb_channel = track["Audio/Channels/unsigned"].value
+            if "Audio/BitDepth/unsigned" in track:
+                audio.bits_per_sample = track["Audio/BitDepth/unsigned"].value
+        if "CodecID/string" in track:
             audio.compression = track["CodecID/string"].value
-        except MissingField:
-            pass
         self.addGroup("audio[]", audio, "Audio stream")
 
     def processSubtitle(self, track):
         sub = Metadata(self)
+        self.trackCommon(track, sub)
         try:
-            self.trackCommon(track, sub)
             sub.compression = track["CodecID/string"].value
         except MissingField:
             pass
@@ -114,16 +124,16 @@ class MkvMetadata(MultipleMetadata):
         setattr(self, key, value)
 
     def processInfo(self, info):
-        if "Duration/float" in info \
-        and "TimecodeScale/unsigned" in info \
-        and 0 < info["Duration/float"].value:
-            try:
-                seconds = info["Duration/float"].value * info["TimecodeScale/unsigned"].value * 1e-9
-                self.duration = timedelta(seconds=seconds)
-            except OverflowError:
-                # Catch OverflowError for timedelta
-                # (long int too large to convert to int)
-                pass
+        if "TimecodeScale/unsigned" in info:
+            duration = self.getDouble(info, "Duration")
+            if duration is not None:
+                try:
+                    seconds = duration * info["TimecodeScale/unsigned"].value * 1e-9
+                    self.duration = timedelta(seconds=seconds)
+                except OverflowError:
+                    # Catch OverflowError for timedelta (long int too large
+                    # to be converted to an int)
+                    pass
         if "DateUTC/date" in info:
             try:
                 self.creation_date = dateToDatetime(info["DateUTC/date"].value)
@@ -212,7 +222,7 @@ class MovMetadata(RootMetadata):
         self.last_modification = hdr["lastmod_date"].value
         self.duration = timedelta(seconds=float(hdr["duration"].value) / hdr["time_scale"].value)
         self.comment = _("Play speed: %.1f%%") % (hdr["play_speed"].value*100)
-        self.comment = _("User volume: %.1f%%") % (float(hdr["volume"].value)*100//255)
+        self.comment = _("User volume: %.1f%%") % (float(hdr["volume"].value)*100)
 
     @fault_tolerant
     def processTrackHeader(self, hdr):
@@ -258,7 +268,6 @@ class AsfMetadata(MultipleMetadata):
 
     def processHeader(self, header):
         compression = []
-        bit_rates = []
         is_vbr = None
 
         if "ext_desc/content" in header:

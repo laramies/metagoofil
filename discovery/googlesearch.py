@@ -1,6 +1,6 @@
 import string
 import httplib, sys
-import parser
+import myparser
 import re
 import time
 
@@ -28,15 +28,15 @@ class search_google:
 		self.totalresults+= self.results
 
 	def get_emails(self):
-		rawres=parser.parser(self.totalresults,self.word)
+		rawres=myparser.parser(self.totalresults,self.word)
 		return rawres.emails()
 	
 	def get_hostnames(self):
-		rawres=parser.parser(self.totalresults,self.word)
+		rawres=myparser.parser(self.totalresults,self.word)
 		return rawres.hostnames()
 	
 	def get_files(self):
-		rawres=parser.parser(self.totalresults,self.word,self.filetype)
+		rawres=myparser.parser(self.totalresults,self.word)
 		return rawres.fileurls()
 	
 	def process_files(self):

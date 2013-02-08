@@ -42,9 +42,7 @@ def clearCaches():
 
 try:
 #---- 'resource' implementation ---------------------------------------------
-    from resource import (getpagesize,
-        getrlimit, setrlimit,
-        RUSAGE_SELF, RLIMIT_AS)
+    from resource import getpagesize, getrlimit, setrlimit, RLIMIT_AS
 
     PAGE_SIZE = getpagesize()
 

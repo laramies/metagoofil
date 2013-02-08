@@ -20,6 +20,7 @@ from hachoir_core.endian import LITTLE_ENDIAN, BIG_ENDIAN
 from hachoir_core.tools import alignValue, makePrintable
 from hachoir_core.i18n import guessBytesCharset, _
 from hachoir_core import config
+from codecs import BOM_UTF16_LE, BOM_UTF16_BE, BOM_UTF32_LE, BOM_UTF32_BE
 
 # Default charset used to convert byte string to Unicode
 # This charset is used if no charset is specified or on conversion error
@@ -37,13 +38,35 @@ class GenericString(Bytes):
 
     # 8-bit charsets
     CHARSET_8BIT = set((
-        "ASCII",
-        "MacRoman", "CP037",
-        "WINDOWS-1252", "WINDOWS-1253",
-        "ISO-8859-1",  "ISO-8859-2",  "ISO-8859-3",  "ISO-8859-4",
-        "ISO-8859-5",  "ISO-8859-6",  "ISO-8859-7",  "ISO-8859-8",
-        "ISO-8859-9",  "ISO-8859-10", "ISO-8859-11",
-        "ISO-8859-13", "ISO-8859-14", "ISO-8859-15"))
+        "ASCII",          # ANSI X3.4-1968
+        "MacRoman",
+        "CP037",          # EBCDIC 037
+        "CP874",          # Thai
+        "WINDOWS-1250",   # Central Europe
+        "WINDOWS-1251",   # Cyrillic
+        "WINDOWS-1252",   # Latin I
+        "WINDOWS-1253",   # Greek
+        "WINDOWS-1254",   # Turkish
+        "WINDOWS-1255",   # Hebrew
+        "WINDOWS-1256",   # Arabic
+        "WINDOWS-1257",   # Baltic
+        "WINDOWS-1258",   # Vietnam
+        "ISO-8859-1",     # Latin-1
+        "ISO-8859-2",     # Latin-2
+        "ISO-8859-3",     # Latin-3
+        "ISO-8859-4",     # Latin-4
+        "ISO-8859-5",
+        "ISO-8859-6",
+        "ISO-8859-7",
+        "ISO-8859-8",
+        "ISO-8859-9",     # Latin-5
+        "ISO-8859-10",    # Latin-6
+        "ISO-8859-11",    # Thai
+        "ISO-8859-13",    # Latin-7
+        "ISO-8859-14",    # Latin-8
+        "ISO-8859-15",    # Latin-9 or ("Latin-0")
+        "ISO-8859-16",    # Latin-10
+    ))
 
     # UTF-xx charset familly
     UTF_CHARSET = {
@@ -58,8 +81,8 @@ class GenericString(Bytes):
 
     # UTF-xx BOM => charset with endian
     UTF_BOM = {
-        16: {"\xFF\xFE": "UTF-16-LE", "\xFE\xFF": "UTF-16-BE"},
-        32: {"\xFF\xFE\x00\x00": "UTF-32LE", "\x00\x00\xFE\xFF": "UTF-32BE"},
+        16: {BOM_UTF16_LE: "UTF-16-LE", BOM_UTF16_BE: "UTF-16-BE"},
+        32: {BOM_UTF32_LE: "UTF-32LE", BOM_UTF32_BE: "UTF-32BE"},
     }
 
     # Suffix format: value is suffix (string)

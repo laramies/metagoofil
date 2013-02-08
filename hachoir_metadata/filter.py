@@ -1,5 +1,5 @@
 from hachoir_metadata.timezone import UTC
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 
 # Year in 1850..2030
 MIN_YEAR = 1850

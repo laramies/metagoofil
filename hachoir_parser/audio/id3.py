@@ -209,7 +209,7 @@ class ID3v1(FieldSet):
 
     def createDescription(self):
         version = self.getVersion()
-        return "ID 3%s: author=%s, song=%s" % (
+        return "ID3 %s: author=%s, song=%s" % (
             version, self["author"].value, self["song"].value)
 
 def getCharset(field):
@@ -246,6 +246,17 @@ class ID3_StringCharset(ID3_String):
         charset = getCharset(self["charset"])
         yield String(self, "text", size, "Text", charset=charset, strip=self.STRIP)
 
+class ID3_GEOB(ID3_StringCharset):
+    def createFields(self):
+        yield Enum(UInt8(self, "charset"), self.charset_desc)
+        charset = getCharset(self["charset"])
+        yield CString(self, "mime", "MIME type", charset=charset)
+        yield CString(self, "filename", "File name", charset=charset)
+        yield CString(self, "description", "Content description", charset=charset)
+        size = (self.size - self.current_size) // 8
+        if not size:
+            return
+        yield String(self, "text", size, "Text", charset=charset)
 
 class ID3_Comment(ID3_StringCharset):
     def createFields(self):
@@ -353,6 +364,7 @@ class ID3_Chunk(FieldSet):
     }
     tag23_name = {
         "COMM": "Comment",
+        "GEOB": "Encapsulated object",
         "PRIV": "Private",
         "TPE1": "Artist",
         "TCOP": "Copyright",
@@ -371,6 +383,7 @@ class ID3_Chunk(FieldSet):
     handler = {
         "COMM": ID3_Comment,
         "COM": ID3_Comment,
+        "GEOB": ID3_GEOB,
         "PIC": ID3_Picture23,
         "APIC": ID3_Picture24,
         "PRIV": ID3_Private,

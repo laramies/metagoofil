@@ -6,7 +6,6 @@ from hachoir_parser.image import (
 from hachoir_parser.image.png import getBitsPerPixel as pngBitsPerPixel
 from hachoir_parser.image.xcf import XcfProperty
 from hachoir_core.i18n import _
-from hachoir_core.error import HACHOIR_ERRORS
 from hachoir_metadata.safe import fault_tolerant
 
 def computeComprRate(meta, compr_size):
@@ -63,7 +62,6 @@ class TiffMetadata(RootMetadata):
 
     def useIFD(self, ifd):
         for field in ifd:
-            key = field.name
             try:
                 attrname = self.key_to_attr[field.name]
             except KeyError:
@@ -242,7 +240,7 @@ class GifMetadata(RootMetadata):
     def useScreen(self, screen):
         self.width = screen["width"].value
         self.height = screen["height"].value
-        self.bits_per_pixel = (1 + screen["bpp"].value)
+        self.bits_per_pixel = (1 + screen["size_global_map"].value)
 
 class TargaMetadata(RootMetadata):
     def extract(self, tga):

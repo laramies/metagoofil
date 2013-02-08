@@ -1,6 +1,6 @@
 from hachoir_core.i18n import _
 from hachoir_core.tools import (
-    humanDuration, makePrintable, humanBitRate,
+    humanDuration, humanBitRate,
     humanFrequency, humanBitSize, humanFilesize,
     humanDatetime)
 from hachoir_core.language import Language
@@ -78,6 +78,7 @@ def registerAllItems(meta):
         filter=DATETIME_FILTER, type=(datetime, date), conversion=setDatetime))
     meta.register(Data("last_modification", 501, _("Last modification"), text_handler=humanDatetime,
         filter=DATETIME_FILTER, type=(datetime, date), conversion=setDatetime))
+    meta.register(Data("revision_history", 502, _("Revision history"),type=unicode))
     meta.register(Data("latitude", 510, _("Latitude"), type=float))
     meta.register(Data("longitude", 511, _("Longitude"), type=float))
     meta.register(Data("altitude", 511, _("Altitude"), type=float, text_handler=humanAltitude))
@@ -108,5 +109,5 @@ def registerAllItems(meta):
     meta.register(Data("comment", 902, _("Comment"), type=unicode))
     meta.register(Data("format_version", 950, _("Format version"), type=unicode))
     meta.register(Data("mime_type", 951, _("MIME type"), type=unicode))
-    meta.register(Data("endian", 952, _("Endian"), type=unicode))
+    meta.register(Data("endian", 952, _("Endianness"), type=unicode))
 

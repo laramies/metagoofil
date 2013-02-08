@@ -19,7 +19,10 @@ class metaMs2k:
 
 	def getData(self):
 		filename, realname = unicodeFilename(self.filename), self.filename
-		parser = createParser(filename, realname)
+		try:
+			parser = createParser(filename, realname)
+		except:
+			return "error"
 		try:
 			metadata = extractMetadata(parser)
 		except HachoirError, err:
@@ -50,6 +53,10 @@ class metaMs2k:
 						self.users.append(res[2])
 				elif res[1]==" LastPrinted":
 						self.lastPrinted.append(res[2])
+				elif res[0]=="- Revision history":
+						#self.paths.append(res[2])
+						res2=line.split(",")
+						self.paths.append(res2[1].split("file ")[1])
 				self.raw=text
 		return "ok"
 

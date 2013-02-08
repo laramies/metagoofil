@@ -201,6 +201,18 @@ def parseODML(self):
     if 0 < padding:
         yield NullBytes(self, "padding[]", padding)
 
+class AVIIndexEntry(FieldSet):
+    size = 16*8
+    def createFields(self):
+        yield String(self, "tag", 4, "Tag", charset="ASCII")
+        yield UInt32(self, "flags")
+        yield UInt32(self, "start", "Offset from start of movie data")
+        yield UInt32(self, "length")
+
+def parseIndex(self):
+    while not self.eof:
+        yield AVIIndexEntry(self, "index[]")
+
 class Chunk(FieldSet):
     TAG_INFO = {
         # This dictionnary is edited by RiffFile.validate()
@@ -285,7 +297,7 @@ class ChunkAVI(Chunk):
         "strh": ("stream_hdr", parseAVIStreamHeader, "Stream header"),
         "strf": ("stream_fmt", parseAVIStreamFormat, "Stream format"),
         "avih": ("avi_hdr", parseAviHeader, "AVI header"),
-        "idx1": ("index", None, "Stream index"),
+        "idx1": ("index", parseIndex, "Stream index"),
         "dmlh": ("odml_hdr", parseODML, "ODML header"),
     })
 
@@ -383,9 +395,11 @@ class RiffFile(Parser):
         except KeyError:
             chunk_cls = Chunk
 
-        # Parse all chuks
-        while not self.eof:
+        # Parse all chunks up to filesize
+        while self.current_size < self["filesize"].value*8+8:
             yield chunk_cls(self, "chunk[]")
+        if not self.eof:
+            yield RawBytes(self, "padding[]", (self.size-self.current_size)/8)
 
     def createMimeType(self):
         try:

@@ -16,7 +16,7 @@ class Log:
     def __init__(self):
         self.__buffer = {}
         self.__file = None
-        self.use_print = False 
+        self.use_print = True
         self.use_buffer = False
         self.on_new_message = None # Prototype: def func(level, prefix, text, context)
 

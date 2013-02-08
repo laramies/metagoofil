@@ -46,7 +46,7 @@ class ArchiveFile(Parser):
         while not self.eof:
             data = self.stream.readBytes(self.current_size, 1)
             if data == "\n":
-                yield UnixLine(self, "empty_line[]", "Empty line")
+                yield RawBytes(self, "empty_line[]", 1, "Empty line")
             else:
                 yield ArchiveFileEntry(self, "file[]", "File")
 

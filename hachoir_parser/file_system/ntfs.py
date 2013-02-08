@@ -32,17 +32,17 @@ class BiosParameterBlock(FieldSet):
 
     def createFields(self):
         yield UInt16(self, "bytes_per_sector", "Size of a sector in bytes")
-	yield UInt8(self, "sectors_per_cluster", "Size of a cluster in sectors")
-	yield NullBytes(self, "reserved_sectors", 2)
-	yield NullBytes(self, "fats", 1)
-	yield NullBytes(self, "root_entries", 2)
-	yield NullBytes(self, "sectors", 2)
-	yield Enum(UInt8(self, "media_type"), self.MEDIA_TYPE)
-	yield NullBytes(self, "sectors_per_fat", 2)
-	yield UInt16(self, "sectors_per_track")
-	yield UInt16(self, "heads")
-	yield UInt32(self, "hidden_sectors")
-	yield NullBytes(self, "large_sectors", 4)
+        yield UInt8(self, "sectors_per_cluster", "Size of a cluster in sectors")
+        yield NullBytes(self, "reserved_sectors", 2)
+        yield NullBytes(self, "fats", 1)
+        yield NullBytes(self, "root_entries", 2)
+        yield NullBytes(self, "sectors", 2)
+        yield Enum(UInt8(self, "media_type"), self.MEDIA_TYPE)
+        yield NullBytes(self, "sectors_per_fat", 2)
+        yield UInt16(self, "sectors_per_track")
+        yield UInt16(self, "heads")
+        yield UInt32(self, "hidden_sectors")
+        yield NullBytes(self, "large_sectors", 4)
 
     def validate(self):
         if self["bytes_per_sector"].value not in (256, 512, 1024, 2048, 4096):

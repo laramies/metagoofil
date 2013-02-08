@@ -56,8 +56,8 @@ def Enum(parent, enum):
     return _Enum(GenericInteger(parent, 'enum', False, parent['size'].value*8), enum)
 
 def Bool(parent):
-    return GenericInteger(parent, 'bool', False, parent['size'].value*8, \
-        text_handler = lambda chunk: str(chunk.value != 0))
+    return textHandler(GenericInteger(parent, 'bool', False, parent['size'].value*8),
+        lambda chunk: str(chunk.value != 0))
 
 def UInt(parent):
     return GenericInteger(parent, 'unsigned', False, parent['size'].value*8)
@@ -219,8 +219,8 @@ class Block(FieldSet):
         size = (self._size - self.current_size) / 8
         lacing = self['lacing'].value
         if lacing:
-            yield GenericInteger(self, 'n_frames', False, 8, \
-                text_handler = lambda chunk: str(chunk.value+1))
+            yield textHandler(GenericInteger(self, 'n_frames', False, 8),
+                lambda chunk: str(chunk.value+1))
             yield Lace(self, lacing - 1, size - 1)
         else:
             yield RawBytes(self,'frame', size)
@@ -545,13 +545,20 @@ class MkvFile(Parser):
     PARSER_TAGS = {
         "id": "matroska",
         "category": "container",
-        "file_ext": ("mka", "mkv"),
-        "mime": (u"video/x-matroska", u"audio/x-matroska"),
+        "file_ext": ("mka", "mkv", "webm"),
+        "mime": (
+            u"video/x-matroska",
+            u"audio/x-matroska",
+            u"video/webm",
+            u"audio/webm"),
         "min_size": 5*8,
         "magic": (("\x1A\x45\xDF\xA3", 0),),
         "description": "Matroska multimedia container"
     }
     endian = BIG_ENDIAN
+
+    def _getDoctype(self):
+        return self[0]['DocType/string'].value
 
     def validate(self):
         if self.stream.readBits(0, 32, self.endian) != self.EBML_SIGNATURE:
@@ -561,14 +568,14 @@ class MkvFile(Parser):
         except ParserError:
             return False
         if None < self._size < first._size:
-            return False
-        return self.stream.searchBytes('\x42\x82\x88matroska', 5*8, first._size) is not None
+            return "First chunk size is invalid"
+        if self._getDoctype() not in ('matroska', 'webm'):
+            return "Stream isn't a matroska document."
+        return True
 
     def createFields(self):
         hdr = EBML(self, ebml)
         yield hdr
-        if hdr['DocType/string'].value != 'matroska':
-            raise ParserError("Stream isn't a matroska document.")
 
         while not self.eof:
             yield EBML(self, { 0x18538067: ('Segment[]', segment) })
@@ -576,4 +583,16 @@ class MkvFile(Parser):
     def createContentSize(self):
         field = self["Segment[0]/size"]
         return field.absolute_address + field.value * 8 + field.size
+
+    def createDescription(self):
+        if self._getDoctype() == 'webm':
+            return 'WebM video'
+        else:
+            return 'Matroska video'
+
+    def createMimeType(self):
+        if self._getDoctype() == 'webm':
+            return u"video/webm"
+        else:
+            return u"video/x-matroska"
 

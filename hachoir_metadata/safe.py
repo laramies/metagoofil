@@ -1,4 +1,4 @@
-from hachoir_core.error import HACHOIR_ERRORS, warning, error
+from hachoir_core.error import HACHOIR_ERRORS, warning
 
 def fault_tolerant(func, *args):
     def safe_func(*args, **kw):

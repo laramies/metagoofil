@@ -19,6 +19,7 @@ import hachoir_core
 import locale
 from os import path
 import sys
+from codecs import BOM_UTF8, BOM_UTF16_LE, BOM_UTF16_BE
 
 def _getTerminalCharset():
     """
@@ -65,7 +66,7 @@ def getTerminalCharset():
         getTerminalCharset.value = _getTerminalCharset()
         return getTerminalCharset.value
 
-class UnicodeStdout:
+class UnicodeStdout(object):
     def __init__(self, old_device, charset):
         self.device = old_device
         self.charset = charset
@@ -78,13 +79,14 @@ class UnicodeStdout:
             text = text.encode(self.charset, 'replace')
         self.device.write(text)
 
+    def writelines(self, lines):
+        for text in lines:
+            self.write(text)
+
 def initLocale():
     # Only initialize locale once
-    try:
-        if initLocale.is_done:
-            return
-    except AttributeError:
-        pass
+    if initLocale.is_done:
+        return getTerminalCharset()
     initLocale.is_done = True
 
     # Setup locales
@@ -96,11 +98,13 @@ def initLocale():
     # Get the terminal charset
     charset = getTerminalCharset()
 
-    if config.unicode_stdout:
+    # UnicodeStdout conflicts with the readline module
+    if config.unicode_stdout and ('readline' not in sys.modules):
         # Replace stdout and stderr by unicode objet supporting unicode string
         sys.stdout = UnicodeStdout(sys.stdout, charset)
         sys.stderr = UnicodeStdout(sys.stderr, charset)
-        return charset
+    return charset
+initLocale.is_done = False
 
 def _dummy_gettext(text):
     return unicode(text)
@@ -147,9 +151,9 @@ def _initGettext():
     return (unicode_gettext, unicode_ngettext)
 
 UTF_BOMS = (
-    ("\xEF\xBB\xBF", "UTF-8"),
-    ("\xFF\xFE", "UTF-16-LE"),
-    ("\xFE\xFF", "UTF-16-BE"),
+    (BOM_UTF8, "UTF-8"),
+    (BOM_UTF16_LE, "UTF-16-LE"),
+    (BOM_UTF16_BE, "UTF-16-BE"),
 )
 
 # Set of valid characters for specific charset

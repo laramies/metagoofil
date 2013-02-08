@@ -19,7 +19,7 @@ from hachoir_core.field import (FieldSet, ParserError,
     PaddingBytes, NullBytes, RawBytes)
 from hachoir_core.endian import LITTLE_ENDIAN
 from hachoir_core.text_handler import (
-    textHandler, displayHandler, filesizeHandler)
+    displayHandler, filesizeHandler)
 from hachoir_core.tools import humanBitRate
 from itertools import izip
 from hachoir_parser.video.fourcc import audio_codec_name, video_fourcc_name

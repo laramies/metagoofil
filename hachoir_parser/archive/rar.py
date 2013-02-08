@@ -268,7 +268,6 @@ class Block(FieldSet):
         self._size = 8*self["block_size"].value
         if t == 0x74 or t == 0x7A:
             self._size += 8*self["compressed_size"].value
-            flags = self["flags"]
             if "is_large" in self["flags"] and self["flags/is_large"].value:
                 self._size += 8*self["large_size"].value
         elif "has_added_size" in self:

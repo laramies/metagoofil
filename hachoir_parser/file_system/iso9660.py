@@ -21,9 +21,9 @@ class PrimaryVolumeDescriptor(FieldSet):
         yield NullBytes(self, "unused[]", 1)
         yield String(self, "system_id", 32, "System identifier", strip=" ")
         yield String(self, "volume_id", 32, "Volume identifier", strip=" ")
-        yield RawBytes(self, "unused[]", 8)
+        yield NullBytes(self, "unused[]", 8)
         yield UInt64(self, "space_size", "Volume space size")
-        yield RawBytes(self, "unused[]", 32)
+        yield NullBytes(self, "unused[]", 32)
         yield UInt32(self, "set_size", "Volume set size")
         yield UInt32(self, "seq_num", "Sequence number")
         yield UInt32(self, "block_size", "Block size")
@@ -46,7 +46,7 @@ class PrimaryVolumeDescriptor(FieldSet):
         yield String(self, "effective_ts", 17, "Effective date and time", strip=" ")
         yield UInt8(self, "struct_ver", "Structure version")
         yield NullBytes(self, "unused[]", 1)
-        yield RawBytes(self, "app_use", 512, "Application use")
+        yield String(self, "app_use", 512, "Application use", strip=" \0")
         yield NullBytes(self, "unused[]", 653)
 
 class BootRecord(FieldSet):

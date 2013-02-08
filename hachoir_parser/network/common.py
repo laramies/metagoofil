@@ -37,6 +37,22 @@ class IPv4_Address(Field):
     def createDisplay(self):
         return ip2name(self.value)
 
+class IPv6_Address(Field):
+    def __init__(self, parent, name, description=None):
+        Field.__init__(self, parent, name, 128, description)
+
+    def createValue(self):
+        value = self._parent.stream.readBits(self.absolute_address, 128, self.parent.endian)
+        parts = []
+        for index in xrange(8):
+            part = "%04x" % (value & 0xffff)
+            value >>= 16
+            parts.append(part)
+        return ':'.join(reversed(parts))
+
+    def createDisplay(self):
+        return self.value
+
 class OrganizationallyUniqueIdentifier(Bits):
     """
     IEEE 24-bit Organizationally unique identifier

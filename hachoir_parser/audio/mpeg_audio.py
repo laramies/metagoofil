@@ -402,7 +402,7 @@ class MpegAudioFile(Parser):
         try:
             if self.stream.readBytes(size, 3) == "TAG":
                 size += ID3v1.static_size
-        except InputStreamError, err:
+        except InputStreamError:
             pass
         return size
 

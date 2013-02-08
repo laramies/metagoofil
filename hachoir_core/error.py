@@ -3,7 +3,7 @@ Functions to display an error (error, warning or information) message.
 """
 
 from hachoir_core.log import log
-from hachoir_core.tools import makePrintable, makeUnicode
+from hachoir_core.tools import makePrintable
 import sys, traceback
 
 def getBacktrace(empty="Empty backtrace."):
@@ -27,13 +27,12 @@ class HachoirError(Exception):
     Parent of all errors in Hachoir library
     """
     def __init__(self, message):
-        self.message = makeUnicode(message)
-
-    def __str__(self):
-        return makePrintable(self.message, "ASCII")
+        message_bytes = makePrintable(message, "ASCII")
+        Exception.__init__(self, message_bytes)
+        self.text = message
 
     def __unicode__(self):
-        return self.message
+        return self.text
 
 # Error classes which may be raised by Hachoir core
 # FIXME: Add EnvironmentError (IOError or OSError) and AssertionError?

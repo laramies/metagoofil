@@ -12,7 +12,7 @@ Creation: 25 march 2005
 DISASSEMBLE = False
 
 from hachoir_parser import Parser
-from hachoir_core.field import (FieldSet,
+from hachoir_core.field import (FieldSet, UInt8,
     UInt16, Int32, UInt32, Int64, ParserError, Float64, Enum,
     Character, Bytes, RawBytes, PascalString8, TimestampUnix32)
 from hachoir_core.endian import LITTLE_ENDIAN
@@ -30,7 +30,19 @@ if DISASSEMBLE:
 def parseString(parent):
     yield UInt32(parent, "length", "Length")
     length = parent["length"].value
-    if 0 < length:
+    if parent.name == "lnotab":
+        bytecode_offset=0
+        line_number=parent['../firstlineno'].value
+        for i in range(0,length,2):
+            bc_off_delta=UInt8(parent, 'bytecode_offset_delta[]')
+            yield bc_off_delta
+            bytecode_offset+=bc_off_delta.value
+            bc_off_delta._description='Bytecode Offset %i'%bytecode_offset
+            line_number_delta=UInt8(parent, 'line_number_delta[]')
+            yield line_number_delta
+            line_number+=line_number_delta.value
+            line_number_delta._description='Line Number %i'%line_number
+    elif 0 < length:
         yield RawBytes(parent, "text", length, "Content")
     if DISASSEMBLE and parent.name == "compiled_code":
         disassembleBytecode(parent["text"])
@@ -183,6 +195,13 @@ class Object(FieldSet):
         elif code in ("s", "t", "u"):
             self.createValue = self.createValueString
             self.createDisplay = self.createDisplayString
+            if code == 't':
+                if not hasattr(self.root,'string_table'):
+                    self.root.string_table=[]
+                self.root.string_table.append(self)
+        elif code == 'R':
+            if hasattr(self.root,'string_table'):
+                self.createValue = self.createValueStringRef
 
     def createValueString(self):
         if "text" in self:
@@ -206,6 +225,12 @@ class Object(FieldSet):
         if is_negative:
             total = -total
         return total
+
+    def createValueStringRef(self):
+        return self.root.string_table[self['ref'].value].value
+
+    def createDisplayStringRef(self):
+        return self.root.string_table[self['ref'].value].display
 
     def createValueComplex(self):
         return complex(
@@ -243,6 +268,7 @@ class PythonCompiledFile(Parser):
     MAGIC = {
         # Python 1.x
         20121: ("1.5", 0x1050000),
+        50428: ("1.6", 0x1060000),
 
         # Python 2.x
         50823: ("2.0", 0x2000000),
@@ -261,6 +287,13 @@ class PythonCompiledFile(Parser):
         62111: ("2.5b3", 0x2050000),
         62121: ("2.5c1", 0x2050000),
         62131: ("2.5c2", 0x2050000),
+        62151: ("2.6a0", 0x2070000),
+        62161: ("2.6a1", 0x2070000),
+        62171: ("2.7a0", 0x2070000),
+        62181: ("2.7a0", 0x2070000),
+        62191: ("2.7a0", 0x2070000),
+        62201: ("2.7a0", 0x2070000),
+        62211: ("2.7a0", 0x2070000),
 
         # Python 3.x
         3000:  ("3.0 (3000)",  0x3000000),
@@ -270,14 +303,19 @@ class PythonCompiledFile(Parser):
         3040:  ("3.0 (3040)",  0x3000000),
         3050:  ("3.0 (3050)",  0x3000000),
         3060:  ("3.0 (3060)",  0x3000000),
-        3070:  ("3.0 (3070)",  0x3000000),
-        3080:  ("3.0 (3080)",  0x3000000),
-        3090:  ("3.0 (3090)",  0x3000000),
-        3100:  ("3.0 (3100)",  0x3000000),
-        3102:  ("3.0 (3102)",  0x3000000),
-        3110:  ("3.0a4",       0x3000000),
-        3130:  ("3.0a5",       0x3000000),
-        3131:  ("3.0a5 unicode",       0x3000000),
+        3061:  ("3.0 (3061)",  0x3000000),
+        3071:  ("3.0 (3071)",  0x3000000),
+        3081:  ("3.0 (3081)",  0x3000000),
+        3091:  ("3.0 (3091)",  0x3000000),
+        3101:  ("3.0 (3101)",  0x3000000),
+        3103:  ("3.0 (3103)",  0x3000000),
+        3111:  ("3.0a4",       0x3000000),
+        3131:  ("3.0a5",       0x3000000),
+        3141:  ("3.1a0",       0x3010000),
+        3151:  ("3.1a0",       0x3010000),
+        3160:  ("3.2a0",       0x3020000),
+        3170:  ("3.2a1",       0x3020000),
+        3180:  ("3.2a2",       0x3020000),
     }
 
     # Dictionnary which associate the pyc signature (4-byte long string)

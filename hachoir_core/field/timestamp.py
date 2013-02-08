@@ -1,4 +1,4 @@
-from hachoir_core.tools import (humanDatetime,
+from hachoir_core.tools import (humanDatetime, humanDuration,
     timestampUNIX, timestampMac32, timestampUUID60,
     timestampWin64, durationWin64)
 from hachoir_core.field import Bits, FieldSet
@@ -78,7 +78,7 @@ class TimedeltaWin64(GenericTimestamp):
         GenericTimestamp.__init__(self, parent, name, 64, description)
 
     def createDisplay(self):
-        return humanTimedelta(self.value)
+        return humanDuration(self.value)
 
     def createValue(self):
         value = Bits.createValue(self)
