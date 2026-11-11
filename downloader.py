@@ -1,25 +1,26 @@
-import urllib, os, sys
+import os
 
-class downloader():
+try:
+    from urllib import request as urllib_request
+except ImportError:  # Python 2 fallback
+    import urllib2 as urllib_request
+
+
+class downloader(object):
     def __init__(self, url, dir):
         self.url = url
         self.dir = dir
         self.filename = str(url.split("/")[-1])
 
-#       def dlProgress(count, blockSize, totalSize):
-#               percent = int(count*blockSize*100/totalSize)
-#               sys.stdout.write("\r" +"test" + "...%d%%" % percent)
-#               sys.stdout.flush()
-
     def down(self):
-        if os.path.exists(self.dir + "/" + self.filename):
-            pass
-        else:
-            try:
-                urllib.urlretrieve(self.url, self.dir + "/" + self.filename)
-            except:
-                print "\t [x] Error downloading " + self.url
-                self.filename = ""
+        target_path = os.path.join(self.dir, self.filename)
+        if os.path.exists(target_path):
+            return
+        try:
+            urllib_request.urlretrieve(self.url, target_path)
+        except Exception:
+            print("\t [x] Error downloading " + self.url)
+            self.filename = ""
 
     def name(self):
         return self.filename
